@@ -1,8 +1,11 @@
 const Router = require('koa-rest-router')
 const Koa = require('koa')
 const mount = require('koa-mount')
+const route = require('koa-route')
 const bodyParser = require('koa-bodyparser')
 const jsonResponse = require('koa-json')
+const secp256k1 = require('secp256k1')
+const keyGen = require('./keyGen')
 
 const app = new Koa()
 
@@ -23,10 +26,32 @@ const resources = [
   exposeResourceForUser('treasures'),
   exposeResourceForUser('connections'),
 ]
-// api.resource('connections', {
+
 resources.map((resource) => {
-  app.use(mount('/api/v0', resource.middleware()))
+  app.use(resource.middleware())
 })
+
+app.use(route.get('/features/secp256k1/sign/:hashHex', async (ctx, hashHex, next) => {
+  const user = ctx.state.user
+  const apiKey = ctx.query.apiKey
+  const targetHash = Buffer.from(hashHex.slice(2), 'hex')
+  const connectionIds = user.connections
+  const connections = await dbFetchMany('connections', connectionIds)
+  const connection = connections.find((connection) => apiKey === connection.apiKey)
+  if (!connection) throw new Error('Connection not found for apiKey')
+  const canSign = connection.capabilities.includes('sign')
+  if (!canSign) throw new Error('Not allowed to sign via this connection')
+  const treasure = await dbFetch('treasures', connection.treasure)
+  if (!treasure) throw new Error('No Treasure found for this connection')
+  const rootKey = keyGen(`m/${treasure.id}'`)._privateKey
+  const sig = secp256k1.sign(targetHash, rootKey)
+  const result = {
+    r: '0x'+sig.signature.slice(0, 32).toString('hex'),
+    s: '0x'+sig.signature.slice(32, 64).toString('hex'),
+    v: sig.recovery + 27,
+  }
+  ctx.body = result
+}))
 
 app.listen(3000, () => {
   console.log('Open http://localhost:3000 and try')
@@ -91,30 +116,29 @@ function exposeResourceForUser(model) {
 //
 
 const db = {
-  users: [
-    {
-      name: 'Mello',
-      treasures: [0],
-      connections: [0],
-    },
-  ],
-  treasures: [
-    {
-      name: 'primary wallet',
-    },
-  ],
-  connections: [
-    {
-      name: 'metamask',
-      apiKey: 'abcd',
-      treasure: 0,
-      capabilities: [0],
-    },
-  ],
-  capabilities: [
-    'sign',
-  ],
+  users: [],
+  treasures: [],
+  connections: [],
 }
+
+// setup fixture data
+;(async () => {
+  const user = await dbCreate('users', {
+    name: 'Ott',
+    treasures: [],
+    connections: [],
+  })
+  const treasure = await dbCreate('treasures', {
+    name: 'primary wallet',
+  }, user)
+  await dbCreate('connections', {
+    name: 'metamask',
+    apiKey: 'abcd',
+    treasure: treasure.id,
+    capabilities: ['sign'],
+  }, user)
+  console.log(JSON.stringify(db, null, 2))
+})()
 
 async function dbPut(model, id, params) {
   const models = db[model][id] = params
@@ -124,6 +148,7 @@ async function dbPut(model, id, params) {
 async function dbCreate(model, params, owner) {
   const models = db[model]
   const nextId = models.length
+  params.id = nextId
   models.push(params)
   if (owner) {
     owner[model].push(nextId)

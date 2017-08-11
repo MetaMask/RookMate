@@ -27,6 +27,7 @@
     "koa-json": "^2.0.2",
     "koa-mount": "^3.0.0",
     "koa-rest-router": "^1.0.1",
+    "koa-route": "^3.2.0",
     "method-override": "^2.3.9",
     "modli": "^2.1.2",
     "modli-nedb": "^2.0.1",
@@ -36,6 +37,7 @@
     "passport-totp": "0.0.2",
     "pify": "^3.0.0",
     "qrcode": "^0.9.0",
+    "secp256k1": "^3.3.0",
     "serve-static": "^1.12.4",
     "speakeasy": "^2.0.0",
     "thirty-two": "^1.0.2"
