@@ -1,4 +1,6 @@
 ### setup
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/MetaMask/RookMate.svg?token=2f4e0b62925c39987f7e0c05beaca7b08b92991f5187501c0f452843a5ccafb8&ts=1502440407548)](https://greenkeeper.io/)
 ```
 cp  config.json.example config.json
 ```
