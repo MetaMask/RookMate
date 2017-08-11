@@ -1,0 +1,16 @@
+<% layout('layout') -%>
+<% if (message) { %>
+<p><%= message %></p>
+<% } %>
+<form action="/login-otp" method="post">
+	<div>
+	<label>Code:</label>
+	<input type="text" name="code"/><br/>
+	</div>
+	<div>
+	<input type="submit" value="Submit"/>
+	</div>
+</form>
+
+<pre><%= JSON.stringify(session, null, 2) %></pre>
+<pre><%= JSON.stringify(user, null, 2) %></pre>

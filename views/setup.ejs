@@ -1,0 +1,19 @@
+<% layout('layout') -%>
+
+<p>Scan this QR Code in Google Authenticator</p>
+<img src="<%- qrImage %>"/>
+<p>- or enter this key manually -</p>
+<b><%= key %></b>
+
+<form action="/auth-otp" method="post">
+	<div>
+  	<label>Code:</label>
+  	<input type="text" name="code"/><br/>
+	</div>
+	<div>
+	   <input type="submit" value="Submit"/>
+	</div>
+</form>
+
+<pre><%= JSON.stringify(session, null, 2) %></pre>
+<pre><%= JSON.stringify(user, null, 2) %></pre>
