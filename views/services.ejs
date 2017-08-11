@@ -1,0 +1,23 @@
+<% layout('layout') -%>
+
+<h2>Services:</h2>
+<ul>
+    <% user.services.forEach(function(service, index) { %>
+        <li>
+          <pre><%= JSON.stringify(service, null, 2) %></pre>
+          <pre><%= JSON.stringify(rootKeys[index], null, 2) %></pre>
+        </li>
+    <% }); %>
+</ul>
+
+<h2>New Service</h2>
+
+<form action="/services/new" method="post">
+	<div>
+  	<label>Service Name:</label>
+  	<input type="text" name="name"/><br/>
+	</div>
+	<div>
+	   <input type="submit" value="Submit"/>
+	</div>
+</form>

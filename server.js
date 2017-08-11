@@ -8,11 +8,23 @@ const TotpStrategy = require('passport-totp').Strategy
 const utils = require('./util')
 
 var users = [
-    { id: 1, twoFactor: { key: 'x93kun3r98', enabled: false, }, username: 'bob', password: 'secret', email: 'bob@example.com' }
-  , { id: 2, twoFactor: { key: 'x93kun3r98', enabled: false, }, username: 'joe', password: 'birthday', email: 'joe@example.com' }
+    {
+      id: 1,
+      twoFactor: {
+        key: 'x93kun3r98',
+        enabled: false,
+      },
+      username: 'bob',
+      password: 'secret',
+      email: 'bob@example.com',
+      services: [
+        {
+          "id": 0,
+          "name": "snake"
+        }
+      ],
+    }
 ];
-
-var keys = {}
 
 function findById(id, fn) {
   var idx = id - 1;
@@ -112,20 +124,39 @@ app.use(flash());
 // persistent login sessions (recommended).
 app.use(passport.initialize());
 app.use(passport.session());
-// app.use(app.router);
 
 
 app.get('/', function(req, res){
   res.render('index', { user: req.user, session: req.session });
 });
 
+//
+// SERVICE CRUD
+//
+
+const keyGen = require('./keyGen')
+
+app.get('/services', loggedin.ensureLoggedIn(), function(req, res){
+  const services = req.user.services
+  const rootKeys = services.map((service) => keyGen(`m/${req.user.id}'/${service.id}'`))
+  res.render('services', { user: req.user, rootKeys, session: req.session });
+});
+
+app.post('/services/new', loggedin.ensureLoggedIn(), function(req, res){
+  req.user.services.push({
+    id: req.user.services.length,
+    name: req.body.name,
+  })
+  res.redirect('/services')
+});
+
+//
+// Login and Admin
+//
+
 // To view account details, user must be authenticated using two factors
 app.get('/account', loggedin.ensureLoggedIn(), ensureSecondFactor, function(req, res){
   res.render('account', { user: req.user, session: req.session });
-});
-
-app.get('/admin', loggedin.ensureLoggedIn(), function(req, res){
-  res.render('admin', { user: req.user, session: req.session });
 });
 
 app.get('/setup', loggedin.ensureLoggedIn(), function(req, res, next){
